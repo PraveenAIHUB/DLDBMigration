@@ -1,0 +1,86 @@
+-- ============================================
+-- Quick Fix for Users Table INSERT RLS
+-- ============================================
+-- Run this in Supabase SQL Editor
+-- This removes the conflicting admin policy and creates a working INSERT policy
+
+-- CRITICAL: Drop the admin policy that uses FOR ALL
+-- This policy is likely blocking regular user inserts
+DROP POLICY IF EXISTS "Admins can view and manage all users" ON users;
+
+-- Drop all INSERT policies to recreate them
+DROP POLICY IF EXISTS "Anyone can create user profile" ON users;
+DROP POLICY IF EXISTS "Anyone can create bidder profile" ON users;
+DROP POLICY IF EXISTS "Authenticated users can create bidder profile" ON users;
+DROP POLICY IF EXISTS "Users can create own bidder profile" ON users;
+DROP POLICY IF EXISTS "Admins can create business users" ON users;
+
+-- Create a simple, working INSERT policy for regular users
+-- This policy will allow authenticated users to create their own profile
+CREATE POLICY "Users can create own bidder profile"
+  ON users
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    auth.uid() IS NOT NULL
+    AND role = 'bidder'
+    AND id = auth.uid()
+  );
+
+-- Recreate admin policies separately (not FOR ALL)
+-- This prevents conflicts with regular user operations
+
+-- Admin SELECT
+CREATE POLICY "Admins can select all users"
+  ON users
+  FOR SELECT
+  TO authenticated
+  USING (
+    EXISTS (SELECT 1 FROM admin_users WHERE id = auth.uid())
+  );
+
+-- Admin UPDATE  
+CREATE POLICY "Admins can update all users"
+  ON users
+  FOR UPDATE
+  TO authenticated
+  USING (
+    EXISTS (SELECT 1 FROM admin_users WHERE id = auth.uid())
+  )
+  WITH CHECK (
+    EXISTS (SELECT 1 FROM admin_users WHERE id = auth.uid())
+  );
+
+-- Admin DELETE
+CREATE POLICY "Admins can delete all users"
+  ON users
+  FOR DELETE
+  TO authenticated
+  USING (
+    EXISTS (SELECT 1 FROM admin_users WHERE id = auth.uid())
+  );
+
+-- Admin INSERT for business users
+CREATE POLICY "Admins can create business users"
+  ON users
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    EXISTS (SELECT 1 FROM admin_users WHERE id = auth.uid())
+    AND role = 'business_user'
+  );
+
+-- Verify the fix
+SELECT 
+  'INSERT Policies' as check_type,
+  policyname,
+  CASE 
+    WHEN with_check IS NOT NULL THEN '✅ Has WITH CHECK'
+    ELSE '❌ Missing WITH CHECK'
+  END as status
+FROM pg_policies 
+WHERE tablename = 'users' 
+  AND schemaname = 'public'
+  AND cmd = 'INSERT'
+ORDER BY policyname;
+

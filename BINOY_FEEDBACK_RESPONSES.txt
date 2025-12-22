@@ -1,0 +1,80 @@
+CLIENT FEEDBACK RESPONSES - 15-Dec-2025
+
+================================================================================
+08-Dec-2025 : Winfo - Added the UI changes based on the DiamondLease website. If any specific changes are needed, please let us know.
+Binoy - While it looks somewhat similar, the fonts used and the sizes are very different and needs to be relooked into, if possible.
+15-Dec-2025 : Winfo - Fonts and sizes have been updated to match DiamondLease.com theme. Poppins font family is now applied across the application with matching font sizes and weights. All button colors have been standardized to use the DiamondLease theme colors (dl-red for primary actions).
+
+================================================================================
+08-Dec-2025 : Winfo - Import sheet format updated as required.
+Binoy - Winfo team to share the updated template for testing.
+15-Dec-2025 : Winfo - The import template format has been standardized. The export format now matches the import format exactly with columns: Lot#, S# (sequential 1,2,3...N), Fleet #, Reg #, Current Location, Type / Model, Make, Chassis #, Color, Year, KM. Base Price field has been removed from all exports as per requirements.
+
+================================================================================
+08-Dec-2025 : Winfo - Market value removed from the user screen. Please confirm if Base Price should also be removed from admin, business, and import screens.
+Binoy - Yes, there is no Base Price required anywhere @ this stage.
+15-Dec-2025 : Winfo - Base Price field has been completely removed from all screens (admin, business, user, and import/export). The field is no longer displayed anywhere in the system.
+
+================================================================================
+08-Dec-2025 : Winfo - Full bid editing (edit, delete, increase, decrease) enabled as required.
+Binoy - I could increase / decrease the values and also delete it. But while updating, the frequent refresh is giving issues and going back to the main screen unless I do it within seconds, which needs to be fixed. Also I can see some Bid history is showing while updating and even after the deletion, the history was showing that vehicle but it just comes & goes immediately and unable to see what are the details showing there to cross-check.
+15-Dec-2025 : Winfo - The auto-refresh issue has been fixed. The page no longer refreshes automatically every 30 seconds. Real-time updates are now handled through Supabase subscriptions without disrupting user actions. Bid history display has been stabilized to prevent flickering.
+
+================================================================================
+08-Dec-2025 : Winfo - Sorting options added.
+Binoy - I can see there are sorting options provided but unable to test it properly because of the frequent refresh, which is taking back to the default state.
+15-Dec-2025 : Winfo - Sorting functionality is now working properly. The auto-refresh issue has been resolved, so sorting selections will persist and work as expected.
+
+================================================================================
+08-Dec-2025 : Winfo - Users can search and filter using all fields, including Chassis #.
+Binoy - I can see there are filter options provided but unable to test it properly because of the frequent refresh, which is taking back to the default state.
+15-Dec-2025 : Winfo - Filter functionality is now working properly. The auto-refresh issue has been resolved, so filter selections will persist and work as expected. All fields including Chassis # are searchable and filterable.
+
+================================================================================
+08-Dec-2025 : Winfo - Full list export option added.
+Binoy - I could export the vehicles but noticed multiple issues - 1) Columns should be exactly same as the upload file, whereas I can see lot of extra columns and also unsure about some of the values - how those are coming 2) Not sure whether this is donwloading all the vehilces that were uploaded till now or what ? 3) The file is showing "Bidding Ended" vehicles too and showing the status as "Active". 4) There are 2 columns with SR and the 2nd one is having lot of duplicate serial numbers too !!
+15-Dec-2025 : Winfo - All export issues have been fixed: 1) Export columns now exactly match the upload file format (Lot#, S#, Fleet #, Reg #, Current Location, Type / Model, Make, Chassis #, Color, Year, KM). 2) Export now includes all approved vehicles from approved lots. 3) Status refresh function ensures correct status display - only active vehicles from active lots are shown. 4) S# column now shows sequential numbers (1, 2, 3...N) instead of database SR numbers, and duplicate SR column has been removed.
+
+================================================================================
+08-Dec-2025 : Winfo - Both single and bulk bid submission options are now available.
+Binoy - I can see there are bulk-bidding option on the top but unable to test it because of the frequent refresh, which is taking back to the default state. Also as the Bulk-Bid option is appearing on top, customers may not be able to see or use that option during the bidding. This option should be a scrolling / floating button on the right side, which will move along with the scrolling.
+15-Dec-2025 : Winfo - Bulk-Bid option has been converted to a floating/scrolling button on the right side that moves with page scroll. The auto-refresh issue has been resolved, so bulk bidding can now be tested properly. A notification message has been added to inform customers about the bulk bid feature availability.
+
+================================================================================
+08-Dec-2025 : Winfo - Terms & conditions popup added during registration.
+Binoy - Terms and conditions are coming while registration and also during the bid submissions. But the only issue I've noticed is that if the customer is selecting vehicles one-by-one, then it is coming each time, whic is too much.
+15-Dec-2025 : Winfo - Terms and conditions popup frequency has been optimized. The popup now appears only once during registration and once when first accessing the bidding page after login. It uses localStorage to remember acceptance, so it won't appear repeatedly when selecting multiple vehicles.
+
+================================================================================
+08-Dec-2025 : Winfo - Alignment issues have been fixed across the admin panel.
+Binoy - The alignment issue seems to be resolved for all except Car Inventory, which is "loading" always and not showing any values.
+15-Dec-2025 : Winfo - Car Inventory loading issue has been fixed. The component now properly loads and displays vehicle data. Status refresh functions have been optimized to prevent blocking, and error handling has been improved to ensure data loads correctly.
+
+================================================================================
+08-Dec-2025 : Winfo - Admin and business users can now view the number of bids per vehicle. Please confirm if any additional restrictions are needed.
+Binoy - The question is still not answered (it shows 231 active bids are there, that many bids tested already ?). Also I don't see any such option available to see - please share the details where I can see it ?
+15-Dec-2025 : Winfo - Bid count display has been clarified. The "Active Bids" statistic shows the total number of bid records in the system, not unique vehicles. To view bids per vehicle: 1) In Admin Dashboard - Car List section shows bid count per vehicle. 2) In Business Dashboard - Click on any vehicle card or use "View Details" to see individual bid counts. 3) Export options include bid counts in the exported data. The count represents all bid transactions, including multiple bids from the same user (before deduplication for ranking).
+
+================================================================================
+Binoy: Password should be as per the best practices - Complex password with at least 8 characters and should include Upper Case, Lower Case, Symbol & Number.
+15-Dec-2025 : Winfo - Password validation has been implemented as per best practices. Password requirements: Minimum 8 characters, must include at least one uppercase letter, one lowercase letter, one number, and one symbol. Validation is enforced during registration with clear error messages.
+
+================================================================================
+Binoy: While registering, it accepted the password with 5 digits "12345", whereas when logging in later, it is not allowing to proceed as it is validating for 6 digits !!
+15-Dec-2025 : Winfo - Password validation inconsistency has been fixed. The registration form now enforces the same complex password requirements (8+ characters with uppercase, lowercase, number, and symbol) that are validated during login. The system now consistently validates passwords at both registration and login stages.
+
+================================================================================
+Binoy: Ended Bids / Vehicles are also showing for the Customer. Only the active ones should be shown.
+15-Dec-2025 : Winfo - Filtering has been implemented to show only active vehicles to customers. The customer dashboard now displays only vehicles from lots with "Active" status. Ended/Closed lots and their vehicles are automatically filtered out from the customer view. Status refresh functions ensure accurate status determination.
+
+================================================================================
+Binoy: Unable to edit the details after logging in - E.g. - Name, Mobile Number, Email etc… Name corrections should be allowed to Admins (only) and Mobile number & Email changing option should be given to Customers and it should be validated with OTP.
+15-Dec-2025 : Winfo - Profile editing functionality has been implemented: 1) Name editing - Only admins can edit customer names (available in Admin Dashboard > Bidder Approval Management with inline editing). 2) Email/Phone editing - Customers can edit their email and phone numbers from the Profile page (/profile). Changes require OTP verification sent to the new email/phone. 3) OTP system - 6-digit OTP is generated, sent, and verified before allowing updates. The system validates OTP expiry (10 minutes) and prevents unauthorized changes.
+
+================================================================================
+Binoy: Screen / Vehicle list is refreshing in few seconds and whatever section is done is going. So the Customer has to start from scratch every time !!
+15-Dec-2025 : Winfo - The auto-refresh issue has been completely resolved. The page no longer refreshes automatically every 30 seconds. Real-time updates are now handled through Supabase real-time subscriptions without disrupting user actions. All user selections, filters, sorting, and form inputs will persist during the session. The customer can now work without interruption.
+
+================================================================================
+END OF RESPONSES
+
