@@ -1,0 +1,223 @@
+// Prisma Schema for Car Bidding Platform
+// Migrated from Supabase to PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Admin Users Table
+model AdminUser {
+  id            String   @id @default(uuid()) @db.Uuid
+  email         String   @unique
+  passwordHash  String   @map("password_hash")
+  name          String
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  createdBusinessUsers BusinessUser[]  @relation("CreatedBusinessUsers")
+  uploadedLots         Lot[]           @relation("UploadedLots")
+  approvedLots         Lot[]           @relation("ApprovedLots")
+  earlyClosedLots      Lot[]           @relation("EarlyClosedLots")
+  approvedUsers        User[]          @relation("ApprovedUsers")
+  createdTerms         TermsAndCondition[] @relation("CreatedTerms")
+  answeredQuestions    Question[]      @relation("AnsweredQuestions")
+
+  @@map("admin_users")
+}
+
+// Business Users Table (Used Car Team)
+model BusinessUser {
+  id           String    @id @default(uuid()) @db.Uuid
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  name         String
+  phone        String?
+  createdById  String?   @map("created_by") @db.Uuid
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  createdBy    AdminUser? @relation("CreatedBusinessUsers", fields: [createdById], references: [id])
+
+  @@map("business_users")
+}
+
+// Users Table (Bidders/Customers)
+model User {
+  id               String    @id @default(uuid()) @db.Uuid
+  name             String
+  email            String    @unique
+  phone            String
+  role             String    @default("bidder")
+  userType         String    @default("individual") @map("user_type")
+  secondaryContact String?   @map("secondary_contact")
+  emailVerified    Boolean   @default(false) @map("email_verified")
+  mobileVerified   Boolean   @default(false) @map("mobile_verified")
+  otpCode          String?   @map("otp_code")
+  otpExpiresAt     DateTime? @map("otp_expires_at") @db.Timestamptz(6)
+  approved         Boolean   @default(false)
+  approvedById     String?   @map("approved_by") @db.Uuid
+  approvedAt       DateTime? @map("approved_at") @db.Timestamptz(6)
+  termsAccepted    Boolean   @default(false) @map("terms_accepted")
+  termsAcceptedAt  DateTime? @map("terms_accepted_at") @db.Timestamptz(6)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  passwordHash     String?   @map("password_hash")
+
+  approvedBy       AdminUser? @relation("ApprovedUsers", fields: [approvedById], references: [id])
+  bids             Bid[]
+  questions        Question[]
+
+  @@map("users")
+}
+
+// Lots Table
+model Lot {
+  id               String    @id @default(uuid()) @db.Uuid
+  lotNumber        String    @unique @map("lot_number")
+  name             String?
+  description      String?
+  uploadedById     String?   @map("uploaded_by") @db.Uuid
+  uploadedAt       DateTime  @default(now()) @map("uploaded_at") @db.Timestamptz(6)
+  approved         Boolean   @default(false)
+  approvedById     String?   @map("approved_by") @db.Uuid
+  approvedAt       DateTime? @map("approved_at") @db.Timestamptz(6)
+  biddingStartDate DateTime? @map("bidding_start_date") @db.Timestamptz(6)
+  biddingEndDate   DateTime? @map("bidding_end_date") @db.Timestamptz(6)
+  earlyClosed      Boolean   @default(false) @map("early_closed")
+  earlyClosedById  String?   @map("early_closed_by") @db.Uuid
+  earlyClosedAt    DateTime? @map("early_closed_at") @db.Timestamptz(6)
+  status           String    @default("Pending")
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  uploadedBy       AdminUser? @relation("UploadedLots", fields: [uploadedById], references: [id])
+  approvedBy       AdminUser? @relation("ApprovedLots", fields: [approvedById], references: [id])
+  earlyClosedBy    AdminUser? @relation("EarlyClosedLots", fields: [earlyClosedById], references: [id])
+  cars             Car[]
+  questions        Question[]
+
+  @@index([status])
+  @@map("lots")
+}
+
+// Cars Table
+model Car {
+  id               String    @id @default(uuid()) @db.Uuid
+  srNumber         String?   @map("sr_number")
+  fleetNo          String?   @map("fleet_no")
+  regNo            String?   @map("reg_no")
+  makeModel        String    @map("make_model")
+  year             Int?
+  km               Int?
+  price            Decimal?  @db.Decimal(12, 2)
+  location         String?
+  chassisNo        String?   @map("chassis_no")
+  engineNo         String?   @map("engine_no")
+  color            String?
+  fuelType         String?   @map("fuel_type")
+  transmission     String?
+  bodyType         String?   @map("body_type")
+  seats            Int?
+  doors            Int?
+  currentLocation  String?   @map("current_location")
+  specs            Json?     @default("{}")
+  notes            String?
+  images           String[]  @default([])
+  documents        String[]  @default([])
+  lotId            String?   @map("lot_id") @db.Uuid
+  biddingStartDate DateTime? @map("bidding_start_date") @db.Timestamptz(6)
+  biddingEndDate   DateTime? @map("bidding_end_date") @db.Timestamptz(6)
+  biddingEnabled   Boolean   @default(false) @map("bidding_enabled")
+  status           String    @default("Disabled")
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  lot              Lot?      @relation(fields: [lotId], references: [id], onDelete: SetNull)
+  bids             Bid[]
+  questions        Question[]
+
+  @@index([lotId])
+  @@index([status])
+  @@index([biddingStartDate, biddingEndDate])
+  @@index([chassisNo])
+  @@index([regNo])
+  @@map("cars")
+}
+
+// Bids Table
+model Bid {
+  id        String   @id @default(uuid()) @db.Uuid
+  carId     String   @map("car_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  amount    Decimal  @db.Decimal(12, 2)
+  isWinner  Boolean  @default(false) @map("is_winner")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  car       Car      @relation(fields: [carId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([carId, userId])
+  @@index([carId])
+  @@index([userId])
+  @@index([createdAt(sort: Desc)])
+  @@index([isWinner], map: "idx_bids_is_winner")
+  @@map("bids")
+}
+
+// Terms and Conditions Table
+model TermsAndCondition {
+  id          String   @id @default(uuid()) @db.Uuid
+  version     String
+  content     String
+  active      Boolean  @default(true)
+  createdById String?  @map("created_by") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  createdBy   AdminUser? @relation("CreatedTerms", fields: [createdById], references: [id])
+
+  @@map("terms_and_conditions")
+}
+
+// Questions Table
+model Question {
+  id           String    @id @default(uuid()) @db.Uuid
+  lotId        String?   @map("lot_id") @db.Uuid
+  carId        String?   @map("car_id") @db.Uuid
+  askedById    String    @map("asked_by") @db.Uuid
+  questionText String    @map("question_text")
+  answered     Boolean   @default(false)
+  answerText   String?   @map("answer_text")
+  answeredById String?   @map("answered_by") @db.Uuid
+  answeredAt   DateTime? @map("answered_at") @db.Timestamptz(6)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  lot          Lot?       @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  car          Car?       @relation(fields: [carId], references: [id], onDelete: Cascade)
+  askedBy      User       @relation(fields: [askedById], references: [id], onDelete: Cascade)
+  answeredBy   AdminUser? @relation("AnsweredQuestions", fields: [answeredById], references: [id])
+
+  @@index([lotId])
+  @@index([carId])
+  @@map("questions")
+}
+
+// OTP Storage Table
+model OtpStorage {
+  id        String   @id @default(uuid()) @db.Uuid
+  email     String?
+  phone     String?
+  otpCode   String   @map("otp_code")
+  otpMethod String   @map("otp_method")
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(6)
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([email])
+  @@index([phone])
+  @@index([otpCode], map: "idx_otp_storage_code")
+  @@index([expiresAt], map: "idx_otp_storage_expires")
+  @@map("otp_storage")
+}
