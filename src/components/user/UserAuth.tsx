@@ -56,22 +56,22 @@ export function UserAuth() {
         const normalizedPhone = normalizePhoneNumber(phone);
         await signUp(email, password, name, normalizedPhone);
       } else {
-        // Check if this is a business user email - if so, use business user login
-        const normalizedEmail = email.trim().toLowerCase();
-        const { data: businessUser } = await supabase
-          .from('business_users')
-          .select('id, email')
-          .eq('email', normalizedEmail)
-          .maybeSingle();
-        
-        if (businessUser) {
-          // Use business user sign in instead
-          await businessUserSignIn(email, password);
-          return;
+        // Try regular user sign in first
+        try {
+          await signIn(email, password);
+        } catch (signInError: any) {
+          // If regular sign in fails, check if this might be a business user
+          if (signInError.message?.includes('No user found') || signInError.message?.includes('Invalid')) {
+            try {
+              await businessUserSignIn(email, password);
+            } catch (businessSignInError: any) {
+              // If both fail, throw the original error
+              throw signInError;
+            }
+          } else {
+            throw signInError;
+          }
         }
-        
-        // Regular user sign in
-        await signIn(email, password);
       }
     } catch (err: any) {
       console.error('Authentication error:', err);
