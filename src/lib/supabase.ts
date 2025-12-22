@@ -1,6 +1,9 @@
-import { apiClient } from './api-client';
+import { apiClient, supabaseCompat } from './api-client';
 
-export { apiClient as supabase };
+export const supabase = {
+  ...supabaseCompat,
+  auth: apiClient.auth,
+};
 
 export type Database = {
   public: {

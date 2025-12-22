@@ -288,3 +288,181 @@ class ApiClient {
 }
 
 export const apiClient = new ApiClient();
+
+class SupabaseCompatLayer {
+  from(table: string) {
+    return {
+      select: (columns: string = '*') => {
+        const query = {
+          _table: table,
+          _columns: columns,
+          _filters: [] as any[],
+          _single: false,
+          _maybeSingle: false,
+
+          eq: function(column: string, value: any) {
+            this._filters.push({ type: 'eq', column, value });
+            return this;
+          },
+
+          neq: function(column: string, value: any) {
+            this._filters.push({ type: 'neq', column, value });
+            return this;
+          },
+
+          in: function(column: string, values: any[]) {
+            this._filters.push({ type: 'in', column, values });
+            return this;
+          },
+
+          order: function(column: string, options?: { ascending?: boolean }) {
+            this._filters.push({ type: 'order', column, ascending: options?.ascending !== false });
+            return this;
+          },
+
+          limit: function(count: number) {
+            this._filters.push({ type: 'limit', count });
+            return this;
+          },
+
+          single: function() {
+            this._single = true;
+            return this;
+          },
+
+          maybeSingle: function() {
+            this._maybeSingle = true;
+            return this;
+          },
+
+          then: async function(resolve: any, reject: any) {
+            try {
+              let data: any = null;
+
+              if (table === 'cars') {
+                const result = await apiClient.cars.list();
+                data = result.data;
+              } else if (table === 'bids') {
+                const result = await apiClient.bids.list();
+                data = result.data;
+              } else if (table === 'lots') {
+                const result = await apiClient.lots.list();
+                data = result.data;
+              } else if (table === 'users') {
+                const result = await apiClient.users.list();
+                data = result.data;
+              } else if (table === 'business_users') {
+                const result = await apiClient.business.list();
+                data = result.data;
+              } else if (table === 'questions') {
+                const result = await apiClient.questions.list();
+                data = result.data;
+              } else if (table === 'terms_and_conditions') {
+                const result = await apiClient.terms.list();
+                data = result.data;
+              }
+
+              if (this._filters.length > 0 && data) {
+                data = this._applyFilters(data);
+              }
+
+              if (this._single && data && data.length > 0) {
+                data = data[0];
+              } else if (this._maybeSingle && data) {
+                data = data.length > 0 ? data[0] : null;
+              }
+
+              resolve({ data, error: null });
+            } catch (error: any) {
+              reject({ data: null, error: { message: error.message } });
+            }
+          },
+
+          _applyFilters: function(data: any[]) {
+            let result = [...data];
+
+            for (const filter of this._filters) {
+              if (filter.type === 'eq') {
+                result = result.filter(item => item[filter.column] === filter.value);
+              } else if (filter.type === 'neq') {
+                result = result.filter(item => item[filter.column] !== filter.value);
+              } else if (filter.type === 'in') {
+                result = result.filter(item => filter.values.includes(item[filter.column]));
+              } else if (filter.type === 'order') {
+                result.sort((a, b) => {
+                  const aVal = a[filter.column];
+                  const bVal = b[filter.column];
+                  if (filter.ascending) {
+                    return aVal > bVal ? 1 : -1;
+                  } else {
+                    return aVal < bVal ? 1 : -1;
+                  }
+                });
+              } else if (filter.type === 'limit') {
+                result = result.slice(0, filter.count);
+              }
+            }
+
+            return result;
+          }
+        };
+
+        return query;
+      },
+
+      insert: async (data: any) => {
+        let result: any = null;
+
+        if (table === 'cars') {
+          result = await apiClient.cars.create(data);
+        } else if (table === 'bids') {
+          result = await apiClient.bids.create(data.carId || data.car_id, data.amount);
+        } else if (table === 'lots') {
+          result = await apiClient.lots.create(data);
+        } else if (table === 'questions') {
+          result = await apiClient.questions.create(data);
+        }
+
+        return { data: result?.data || null, error: null };
+      },
+
+      update: (data: any) => {
+        return {
+          eq: async (column: string, value: any) => {
+            let result: any = null;
+
+            if (table === 'cars') {
+              result = await apiClient.cars.update(value, data);
+            } else if (table === 'bids') {
+              result = await apiClient.bids.update(value, data.amount);
+            } else if (table === 'lots') {
+              result = await apiClient.lots.update(value, data);
+            }
+
+            return { data: result?.data || null, error: null };
+          }
+        };
+      },
+
+      delete: () => {
+        return {
+          eq: async (column: string, value: any) => {
+            let result: any = null;
+
+            if (table === 'cars') {
+              result = await apiClient.cars.delete(value);
+            } else if (table === 'bids') {
+              result = await apiClient.bids.delete(value);
+            } else if (table === 'lots') {
+              result = await apiClient.lots.delete(value);
+            }
+
+            return { data: result || null, error: null };
+          }
+        };
+      }
+    };
+  }
+}
+
+export const supabaseCompat = new SupabaseCompatLayer();
