@@ -1,7 +1,7 @@
 import { apiClient, supabaseCompat } from './api-client';
 
 export const supabase = {
-  ...supabaseCompat,
+  from: (table: string) => supabaseCompat.from(table),
   auth: apiClient.auth,
 };
 

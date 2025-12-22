@@ -10,11 +10,19 @@ import { BusinessUserDashboard } from './components/business/BusinessUserDashboa
 import { BusinessUserLogin } from './components/business/BusinessUserLogin';
 import { ResetPassword } from './components/auth/ResetPassword';
 import { SessionWarning } from './components/common/SessionWarning';
+import { checkServerStatus, showServerWarning } from './lib/serverStatus';
 
 // Lazy load UserDashboard to prevent it from loading on admin routes
 const UserDashboard = lazy(() => import('./components/user/UserDashboard').then(module => ({ default: module.UserDashboard })));
 
 function AppContent() {
+  useEffect(() => {
+    checkServerStatus().then(isRunning => {
+      if (!isRunning) {
+        showServerWarning();
+      }
+    });
+  }, []);
   // CRITICAL: Check route FIRST - synchronously, before any hooks
   // Get path synchronously - this happens on every render
   const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
